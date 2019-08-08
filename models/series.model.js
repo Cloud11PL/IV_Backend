@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
 const SeriesSchema = mongoose.Schema({
-  SeriesName: {
-    type: String,
+  SeriesId: {
+    type: Number,
   },
   Device_Id: {
     type: mongoose.Schema.Types.ObjectId,
@@ -11,6 +11,14 @@ const SeriesSchema = mongoose.Schema({
   time: {
     type: Date,
     default: Date.now,
+  },
+  isDone: {
+    type: Boolean,
+    default: false,
+  },
+  BagType: {
+    type: String,
+    default: 'Unknown',
   },
 });
 
