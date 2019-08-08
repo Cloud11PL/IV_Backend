@@ -18,6 +18,9 @@ exports.create = (req, res) => {
   const user = new User({
     username: req.body.username,
     password: hashedPassword,
+    surname: req.body.surname,
+    name: req.body.name,
+    email: req.body.email,
   });
 
   console.log(hashedPassword);
@@ -36,13 +39,29 @@ exports.create = (req, res) => {
 };
 
 exports.findAll = (req, res) => {
+  User.find({}).then((data) => {
+    res.send(data);
+  }).catch((err) => {
+    res.status(500).send({
+      message: err.message,
+    });
+  });
   console.log(req.body);
 };
 
 exports.findOne = (req, res) => {
-  console.log(req.body);
+  console.log(req.params.userId);
+  User.findById(req.params.userId).then((data) => {
+    console.log(data);
+    res.send(data);
+  }).catch((err) => {
+    res.status(500).send({
+      message: err.message,
+    });
+  });
 };
 
 exports.delete = (req, res) => {
   console.log(req.body);
+  res.send('xD');
 };
