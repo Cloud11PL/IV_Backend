@@ -1,9 +1,19 @@
 const Device = require('../models/device.model');
 const Series = require('../models/series.model');
 
-exports.test = (req, res) => {
-  res.send('Hello from Deivce Test!');
-};
+exports.findDeviceId = mqttName => new Promise((resolve, reject) => {
+  Device
+    .findOne({
+      mqttName,
+    }, (err, device) => {
+      if (err) {
+        reject(err);
+      }
+      console.log('Find Device Id');
+      console.log(device._id);
+      resolve(device._id);
+    });
+});
 
 exports.create = (req, res) => {
   Device.create({
@@ -44,8 +54,8 @@ exports.update = (req, res) => {
   Device.update({
     _id: req.body.id,
   }, {
-    Device_Name: req.body.newDeviceName,
-    Location: req.body.newLocation,
+    Device_Name: req.body.newDeviceName ? req.body.newDeviceName : 'Not specified',
+    Location: req.body.newLocation ? req.body.newLocation : 'Not specified',
   }, (err, raw) => {
     if (err) res.send(err);
 
