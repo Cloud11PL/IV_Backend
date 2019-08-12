@@ -2,6 +2,31 @@ const Device = require('../models/device.model');
 const Series = require('../models/series.model');
 const SingleInput = require('../models/singleInput.model');
 
+const seriesController = require('./series.controller');
+const deviceController = require('./device.controller');
+
+/*
+New device:
+  DeviceName/start
+    -check if device is added, if not return error
+    -return series number via MQTT
+    -ewentualnie zrobic array z aktywnymi
+
+Existing device:
+
+  DeviceName/start
+    -check if device exists
+    -check the last series for the device
+    -return device series via mqtt
+
+  DeviceName/seriesNumber/payload
+    -find seriesId by seriesNumber and DeviceName
+    -create SingleInput model with payload and save
+
+    PAMIĘTAĆ O RECONNECTED!!!
+
+*/
+
 const newDeviceStartsNoSeries = (packetArray) => {
   let deviceInfo = {};
   let seriesInfo = {};
@@ -82,6 +107,47 @@ const existingDeviceContinueSeries = (packetArray) => {
   });
 };
 
+// Przerobic na async/await ??
+exports.connectedHandler = topic => new Promise((resolve, reject) => {
+  deviceController
+    .findDeviceId(topic)
+    .then((id) => {
+      seriesController
+        .findSeriesById(id)
+        .then((series) => {
+          console.log(series);
+          if (series.length === 0 || series === undefined) {
+            console.log('Creating new series...');
+            const seriesModel = new Series({
+              SeriesId: 0,
+              Device_Id: id,
+            });
+
+            seriesModel
+              .save()
+              .then((res) => {
+                console.log(res);
+                resolve(res.SeriesId);
+              });
+          } else {
+            const newId = series[0].SeriesId + 1;
+            console.log(newId);
+            const seriesModel = new Series({
+              SeriesId: newId,
+              Device_Id: id,
+            });
+
+            seriesModel
+              .save()
+              .then((res) => {
+                console.log(res);
+                resolve(res.SeriesId);
+              });
+          }
+        });
+    });
+});
+
 exports.handlePacket = (packet) => {
   // mqtt_name/start
   const packetArray = packet.split('/');
@@ -150,11 +216,23 @@ exports.createDevice = (req, res) => {
   }
 };
 
-exports.listDevices = () => {
+exports.listDevices = new Promise((resolve, reject) => {
   console.log('wywoluje sie xd');
   Device.find({}, (err, devices) => {
-    console.log(devices);
-    return devices;
+    if (err) {
+      reject(err);
+    }
+    resolve(devices);
+  });
+});
+
+exports.getDevices = (req, res) => {
+  Device.find({}, (err, devices) => {
+    const devicesNames = [];
+    devices.map((device) => {
+      devicesNames.push(device.mqttName);
+    });
+    res.send(devicesNames);
   });
 };
 
