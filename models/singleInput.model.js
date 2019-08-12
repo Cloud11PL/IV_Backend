@@ -5,13 +5,13 @@ const SensorInputSchema = mongoose.Schema({
     type: Number,
     required: true,
   },
-  deviceId: {
-    type: String,
-    requied: true,
-  },
   seriesId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Series',
+    type: Number,
+    required: true,
+  },
+  mqttName: {
+    type: String,
+    required: true,
   },
   Time: {
     type: Date,
