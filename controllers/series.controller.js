@@ -1,8 +1,5 @@
 const Series = require('../models/series.model');
-
-exports.test = (req, res) => {
-  res.send('Hello from Series Test!');
-};
+const Device = require('../models/device.model');
 
 // Znajdź wszystkie serie dla danego urządzenia
 // Najlepiej jak będą wysłane w kolejności od najnowszej
@@ -22,9 +19,20 @@ exports.test = (req, res) => {
   }
 }
 */
+
+exports.create = (seriesId, Device_Id) => {
+  const series = new Series({
+    SeriesId: seriesId,
+    Device_Id,
+  });
+
+  series.save().then((series) => {
+    console.log(series);
+    return series;
+  });
+};
+
 exports.findAll = (req, res) => {
-  // Może
-  // Lokalizacja(Device), data(Series), isDone(Series)?
   Series.find({
     Device_Id: req.body.device_Id,
   }, (err, series) => {
@@ -33,19 +41,46 @@ exports.findAll = (req, res) => {
   });
 };
 
-// Weź se jedną konkretną serie i elo
-// Daj całe info razem z serią?
+exports.findSeriesById = deviceId => new Promise((resolve, reject) => {
+  Series
+    .find({
+      Device_Id: deviceId,
+    })
+    .sort('-SeriesId')
+    .exec((err, series) => {
+      console.log('Find Series By Id');
+      console.log(series);
+      if (err) {
+        reject(err);
+      }
+      resolve(series);
+    });
+});
+
+exports.findAllSeries = (mqttName) => {
+  Device.findOne({
+    mqttName,
+  }).then((device) => {
+    console.log(device);
+    Series.find({
+      Device_Id: device._id,
+    }).sort('-SeriesId').then((serieses) => {
+      const series = serieses;
+      console.log(series);
+      return series[0];
+    });
+  });
+};
+
 exports.findOne = (req, res) => {
   Series.find({
     _id: req.body.id,
-    // Chyba brakuje listowania wszystkich serii
   }, (err, device) => {
     res.send(device);
     console.log(device);
   });
 };
 
-// Usuń serię
 exports.delete = (req, res) => {
   const seriesRemoved = 0;
   Series.deleteOne({
