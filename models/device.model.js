@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const DeviceSchema = mongoose.Schema({
+  // _id,
   mqttName: {
     type: String,
     unique: true,
