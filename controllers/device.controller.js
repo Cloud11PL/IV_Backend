@@ -1,20 +1,6 @@
 const Device = require('../models/device.model');
 const Series = require('../models/series.model');
 
-exports.findDeviceId = mqttName => new Promise((resolve, reject) => {
-  Device
-    .findOne({
-      mqttName,
-    }, (err, device) => {
-      if (err) {
-        reject(err);
-      }
-      console.log('Find Device Id');
-      console.log(device._id);
-      resolve(device._id);
-    });
-});
-
 exports.create = (req, res) => {
   Device.create({
     Device_Name: req.body.device_name,
@@ -39,11 +25,9 @@ exports.findAll = (req, res) => {
   });
 };
 
-// W ogóle czy to robić??
 exports.findOne = (req, res) => {
   Device.find({
     _id: req.body.id,
-    // Chyba brakuje listowania wszystkich serii
   }, (err, device) => {
     res.send(device);
     console.log(device);
@@ -51,14 +35,13 @@ exports.findOne = (req, res) => {
 };
 
 exports.update = (req, res) => {
-  Device.update({
-    _id: req.body.id,
-  }, {
-    Device_Name: req.body.newDeviceName ? req.body.newDeviceName : 'Not specified',
-    Location: req.body.newLocation ? req.body.newLocation : 'Not specified',
+  Device.findOneAndUpdate({
+    _id: req.body._id,
+  }, req.body, {
+    useFindAndModify: false,
+    new: true,
   }, (err, raw) => {
     if (err) res.send(err);
-
     res.send(raw);
   });
 };
