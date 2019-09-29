@@ -10,10 +10,6 @@ const cors = require('cors');
 const dbConfig = require('./config/database.config');
 const mqttConfig = require('./config/mqtt.config');
 const mqttController = require('./controllers/mqtt.controller');
-const seriesController = require('./controllers/series.controller');
-const deviceController = require('./controllers/device.controller');
-const Series = require('./models/series.model');
-const SingleInput = require('./models/singleInput.model');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -61,52 +57,31 @@ io.on('connection', (socket) => {
 
 client.on('message', (topic, message, packet) => {
   console.log(`${topic} ${message}`);
-  console.log(packet);
+  // console.log(packet);
 
   const stringMessage = message.toString();
 
   if (devicesToSubscribe.includes(topic)) {
-    console.log(topic);
-    console.log(message.toString());
+    // console.log(topic);
+    // console.log('StringMessage SPLIT', message.toString().split('/')[1]);
+    // console.log('StringMessage BEZ', message.toString());
 
-    if (stringMessage === 'connected' || stringMessage === 'reconnected') {
+    if (stringMessage.split('/')[1] === 'connected' || stringMessage.split('/')[1] === 'reconnected') {
       mqttController.connectedHandler(topic).then((id) => {
-        client.publish(`${topic}`, id.toString());
+        client.publish(`${topic}_callback`, id.toString());
+        io.sockets.emit(`${topic}`, stringMessage);
       });
-      // .then(() => {
-      //     console.log('FINAL ID');
-      //     console.log(finalId.toString());
-      //     client.publish(`${topic}`, finalId.toString());
-      // });
-      // client.publish(`${topic}`;
-      // const series = seriesController.findAllSeries(topic);
-      // if (series.length === 0) {
-      //   console.log(series);
-      //   console.log('No series for the device');
-
-      //   seriesController.create();
-      // }
-      // client.publish(`${topic}_callback`)
     } else {
-      const newPayload = stringMessage.split('/');
-
-      const singleInput = new SingleInput({
-        payload: newPayload[1],
-        seriesId: newPayload[0],
-        mqttName: topic,
-      });
-
-      singleInput.save().then((res) => {
-        console.log(res);
+      mqttController.handlePacket(message, topic).then((res) => {
+        console.log('PO HANDLE PACKET', String(res.payload));
+        io.sockets.emit(`${topic}`, String(res.payload));
       });
     }
   }
-
-
-  io.sockets.emit(`${topic}`, String(message));
-  // mqttController.handlePacket([topic, message]);
-  // io.sockets.emit('mqtt', String(message));
 });
 
+require('./routes/series.route')(app);
+require('./routes/device.route')(app);
 require('./routes/user.route')(app);
 require('./routes/mqtt.route')(app);
+require('./routes/slackapp')(app);
