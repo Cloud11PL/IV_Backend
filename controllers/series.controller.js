@@ -1,72 +1,83 @@
+const mongoose = require('mongoose');
+
 const Series = require('../models/series.model');
 const Device = require('../models/device.model');
+const SingleInput = require('../models/singleInput.model');
 
-// Znajdź wszystkie serie dla danego urządzenia
-// Najlepiej jak będą wysłane w kolejności od najnowszej
-// TO-DO: Paginacja
-/*
-{
-  Series_1: {
-    1: {
-      Payload: 1,
-      Time: xD
-    },
-    2: {
-      Payload: 0,
-      Time: xD
-    },
-    ...
-  }
-}
-*/
-
+// eslint-disable-next-line camelcase
 exports.create = (seriesId, Device_Id) => {
   const series = new Series({
     SeriesId: seriesId,
     Device_Id,
   });
 
-  series.save().then((series) => {
-    console.log(series);
-    return series;
-  });
+  series.save().then(savedSeries => savedSeries);
 };
 
 exports.findAll = (req, res) => {
   Series.find({
-    Device_Id: req.body.device_Id,
+    Device_Id: mongoose.Types.ObjectId(req.body.device_Id),
   }, (err, series) => {
     res.send(series);
-    console.log(series);
   });
 };
 
-exports.findSeriesById = deviceId => new Promise((resolve, reject) => {
-  Series
-    .find({
-      Device_Id: deviceId,
-    })
-    .sort('-SeriesId')
-    .exec((err, series) => {
-      console.log('Find Series By Id');
-      console.log(series);
-      if (err) {
-        reject(err);
-      }
-      resolve(series);
-    });
-});
+exports.getAllSeriesForDevice = (req, res) => {
+  Series.find({
+    Device_Id: mongoose.Types.ObjectId(req.query.deviceId),
+  }, (err, series) => {
+    if (err) {
+      res.send(err);
+    }
+    res.send(series);
+  });
+};
+
+exports.getSingleSeries = (req, res) => {
+  Series.findOne({
+    mqttName: req.query.mqttName,
+    SeriesId: req.query.seriesID,
+  }, (err, series) => {
+    if (err) {
+      res.send(err);
+    }
+    res.send(series);
+  });
+};
+
+exports.editSingleSeries = (req, res) => {
+  Series.findOneAndUpdate({
+    mqttName: req.body.mqttName,
+    SeriesId: req.body.SeriesId,
+  }, req.body, { useFindAndModify: false }, (err, newSeries) => {
+    if (err) {
+      res.send(err);
+    }
+    res.send(newSeries);
+  });
+};
+
+exports.getAllInputsById = (req, res) => {
+  SingleInput.find({
+    mqttName: req.query.mqttName,
+    seriesId: req.query.seriesId,
+  }, (err, inputs) => {
+    if (err) {
+      res.send(err);
+    }
+
+    res.send(inputs);
+  });
+};
 
 exports.findAllSeries = (mqttName) => {
   Device.findOne({
     mqttName,
   }).then((device) => {
-    console.log(device);
     Series.find({
       Device_Id: device._id,
     }).sort('-SeriesId').then((serieses) => {
       const series = serieses;
-      console.log(series);
       return series[0];
     });
   });
@@ -77,7 +88,6 @@ exports.findOne = (req, res) => {
     _id: req.body.id,
   }, (err, device) => {
     res.send(device);
-    console.log(device);
   });
 };
 
