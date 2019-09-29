@@ -9,7 +9,8 @@ const cors = require('cors');
 
 const dbConfig = require('./config/database.config');
 const mqttConfig = require('./config/mqtt.config');
-const mqttController = require('./controllers/mqtt.controller');
+const mqttService = require('./services/mqttService');
+const deviceService = require('./services/deviceService');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -27,8 +28,8 @@ mongoose.connect(dbConfig.url, {
 }).then(() => {
   console.log('Connected!');
 
-  mqttController.listDevices.then((devices) => {
-    devices.map((device) => {
+  deviceService.listDevices.then((devices) => {
+    devices.forEach((device) => {
       devicesToSubscribe.push(device.mqttName);
       client.subscribe(`${device.mqttName}`);
       console.log(`Subscribed to ${device.mqttName}`);
@@ -45,6 +46,7 @@ const server = app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
 
+// eslint-disable-next-line import/order
 const io = require('socket.io')(server);
 
 io.on('connection', (socket) => {
@@ -55,24 +57,17 @@ io.on('connection', (socket) => {
   });
 });
 
-client.on('message', (topic, message, packet) => {
+client.on('message', (topic, message) => {
   console.log(`${topic} ${message}`);
-  // console.log(packet);
-
   const stringMessage = message.toString();
-
   if (devicesToSubscribe.includes(topic)) {
-    // console.log(topic);
-    // console.log('StringMessage SPLIT', message.toString().split('/')[1]);
-    // console.log('StringMessage BEZ', message.toString());
-
     if (stringMessage.split('/')[1] === 'connected' || stringMessage.split('/')[1] === 'reconnected') {
-      mqttController.connectedHandler(topic).then((id) => {
+      mqttService.connectedHandler(topic).then((id) => {
         client.publish(`${topic}_callback`, id.toString());
         io.sockets.emit(`${topic}`, stringMessage);
       });
     } else {
-      mqttController.handlePacket(message, topic).then((res) => {
+      mqttService.handlePacket(message, topic).then((res) => {
         console.log('PO HANDLE PACKET', String(res.payload));
         io.sockets.emit(`${topic}`, String(res.payload));
       });
