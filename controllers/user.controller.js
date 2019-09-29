@@ -1,9 +1,7 @@
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
-
-exports.test = (req, res) => {
-  res.send('Hello from Test!');
-};
+const secretKey = require('../secretKey');
 
 exports.create = (req, res) => {
   console.log(req.body);
@@ -36,6 +34,61 @@ exports.create = (req, res) => {
     });
 
   return false;
+};
+
+exports.authenticate = (req, res) => {
+  console.log(req.body);
+  if (!req.body) {
+    return res.status(401).send({
+      message: 'Wrong data',
+    });
+  }
+
+  User.findOne({
+    username: req.body.username,
+  }, (err, user) => {
+    console.log(user);
+    if (err || user === null) {
+      return res.status(401).send({
+        message: 'No user found.',
+      });
+    }
+
+    if (bcrypt.compareSync(req.body.password, user.password)) {
+      const token = jwt.sign({ id: user._id }, secretKey,
+        // {expiresIn: '1h' }
+      );
+
+      res.json({
+        status: 'success',
+        token,
+        username: user.username,
+        name: user.name,
+        surname: user.surname,
+        email: user.email,
+      });
+    } else {
+      res.json({ status: 'fail' });
+    }
+  });
+};
+
+exports.authToken = (req, res) => {
+  console.log(req.body);
+
+  jwt.verify(req.body.token, secretKey, (err, decoded) => {
+    if (err) {
+      res.status(401).send({
+        isAuthorized: false,
+      });
+    }
+    console.log(decoded);
+    res.status(200).send({
+      isAuthorized: true,
+    });
+  });
+  // console.log(verify);
+  // res.status(200).send(verify);
 };
 
 exports.findAll = (req, res) => {
