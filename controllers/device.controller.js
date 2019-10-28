@@ -21,16 +21,17 @@ exports.create = (req, res) => {
 exports.findAll = (req, res) => {
   Device.find({}, (err, devices) => {
     res.send(devices);
-    console.log(devices);
+    // console.log(devices);
   });
 };
 
+// DO poprawienia
 exports.findOne = (req, res) => {
   Device.find({
-    _id: req.body.id,
+    _id: req.query.id,
   }, (err, device) => {
     res.send(device);
-    console.log(device);
+    // console.log(device);
   });
 };
 
