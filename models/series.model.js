@@ -20,6 +20,9 @@ const SeriesSchema = mongoose.Schema({
     type: String,
     default: 'Unknown',
   },
+  // Is notification sent??
+  // Math equation
+  // Max value
 });
 
 module.exports = mongoose.model('Series', SeriesSchema);

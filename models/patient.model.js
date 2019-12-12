@@ -11,6 +11,9 @@ const Patient = mongoose.Schema({
     unique: false,
     required: true,
   },
+  dateAdmitted: {
+    type: Date,
+  },
   deviceId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Device',
