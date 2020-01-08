@@ -87,8 +87,6 @@ exports.authToken = (req, res) => {
       isAuthorized: true,
     });
   });
-  // console.log(verify);
-  // res.status(200).send(verify);
 };
 
 exports.findAll = (req, res) => {

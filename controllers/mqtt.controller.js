@@ -19,9 +19,6 @@ exports.createDevice = (req, res) => {
 exports.getDevices = (req, res) => {
   Device.find({}, (err, devices) => {
     const devicesNames = [];
-    // devices.map((device) => {
-    //   devicesNames.push(device.mqttName);
-    // });
     devices.forEach(device => devicesNames.push(device.mqttName));
     res.send(devicesNames);
   });
