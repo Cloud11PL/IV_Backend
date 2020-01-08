@@ -21,15 +21,10 @@ const SeriesSchema = mongoose.Schema({
   },
   bagType: {
     type: mongoose.Schema.Types.ObjectId,
-    // default: 'Unknown',
   },
   patientId: {
     type: mongoose.Schema.Types.ObjectId,
   },
 });
-
-// Is notification sent??
-// Math equation
-// Max value
 
 module.exports = mongoose.model('Series', SeriesSchema);
