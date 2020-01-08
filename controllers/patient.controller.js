@@ -3,10 +3,9 @@ const Patient = require('../models/patient.model');
 exports.getAllPatients = (req, res) => {
   Patient.find({}, (err, patients) => {
     if (err) {
-      res(err);
+      res.json(err);
     }
-
-    res(patients);
+    res.json(patients);
   });
 };
 
@@ -47,5 +46,26 @@ exports.updatePatient = (req, res) => {
     }
 
     res.json(newPatient);
+  });
+};
+
+exports.reassignPatientDevice = (req, res) => {
+  const { deviceId } = req.body;
+  const { patientId } = req.body;
+
+  console.log(req.body);
+  Patient.findOneAndUpdate({
+    _id: patientId,
+  }, {
+    deviceId,
+  }, {
+    useFindAndModify: false,
+    new: true,
+  }, (err, updatedPatient) => {
+    if (err) {
+      res.send(err);
+    }
+    console.log(updatedPatient);
+    res.json(updatedPatient);
   });
 };

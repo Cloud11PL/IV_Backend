@@ -1,2 +1,9 @@
 node_modules
 mqtt.config.js
+.gcloudignore
+.vscode/arduino.json
+.vscode/c_cpp_properties.json
+app.yaml
+ngrok.exe
+secretKey.js
+secretSlackKey.js

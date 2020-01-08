@@ -15,4 +15,4 @@ const bagTypeSchema = mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model('BagType', bagTypeSchema);
+module.exports = mongoose.model('bagtype', bagTypeSchema);
