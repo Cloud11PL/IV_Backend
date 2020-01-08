@@ -13,6 +13,8 @@ const mqttService = require('./services/mqttService');
 const deviceService = require('./services/deviceService');
 const slackSerivce = require('./services/slackService');
 
+const inputmodel = require('./models/singleInput.model');
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cors({
@@ -21,7 +23,7 @@ app.use(cors({
 
 mongoose.Promise = global.Promise;
 const devicesToSubscribe = [];
-const timeout = 10 * 1000;
+const timeout = 30 * 1000;
 
 const client = mqtt.connect('mqtt://m24.cloudmqtt.com', mqttConfig);
 
@@ -38,6 +40,10 @@ mongoose.connect(dbConfig.url, {
       console.log(`Subscribed to ${device.mqttName}`);
     });
   });
+
+  // inputmodel.find({
+  //   seriesId: { $gt: 4 },
+  // })(res => console.log(res));
 }).catch((err) => {
   console.log(err);
   process.exit();
@@ -63,24 +69,11 @@ io.on('connection', (socket) => {
 const objectWithTimeouts = {};
 const currentSeries = {};
 
-/*
-{
-  deviceID: XD,
-  seriesID: 01,
-  baseline: 130,
-  max: ??,
-  dangerZone: max-130*10%,
-  wasNotificationSent: false,
-  wasMaxSet: false
-}
-*/
-
 client.on('message', (topic, message) => {
   console.log(`${topic} ${message}`);
   const stringMessage = message.toString();
   const tempSeries = {};
   if (!currentSeries[topic]) {
-    tempSeries.baseLine = 130; // DO ZMIANY KIEDYS
     tempSeries.wasNotificationSent = false;
     tempSeries.wasMaxSet = false;
   }
@@ -102,22 +95,28 @@ client.on('message', (topic, message) => {
       // Device broadcasts normally
       mqttService.handlePacket(message, topic).then((res) => {
         console.log('Payload from packet =>', String(res.payload));
-        io.sockets.emit(`${topic}`, String(res.payload));
         const currentTempSeries = currentSeries[topic];
+        currentTempSeries.current = Number(res.payload);
         if (!currentTempSeries.wasMaxSet) {
-          currentTempSeries.max = res.payload;
-          currentTempSeries.dangerZone = (currentTempSeries.baseLine - res.payload) * 0.1;
+          currentTempSeries.max = Number(res.payload) * 1.02; // Dodanie 2% do początkowej masy bo trochę wzrasta...
+          currentTempSeries.criticalLevel = mqttService.getCriticalValue(Number(res.payload));
           currentTempSeries.wasMaxSet = true;
+          console.log(`SET MAX ${currentTempSeries.max}`);
         }
-        if (res.payload < currentTempSeries.max
+        if (currentTempSeries.max < Number(res.payload)) {
+          currentTempSeries.max = Number(res.payload) * 1.02; // Update MAX
+          currentTempSeries.criticalLevel = mqttService.getCriticalValue(Number(res.payload)); // Update critical value;
+          console.log(`MAX WAS UPDATED ${currentTempSeries.max}`);
+        }
+        if (res.payload < currentTempSeries.criticalLevel
           && currentTempSeries.wasNotificationSent === false) {
           console.log('DANGER ZONE BAGIETY JADO');
-          // Send Slack notification
           currentTempSeries.wasNotificationSent = true;
-          slackSerivce.sendLowLevelAlert(topic);
+          slackSerivce.sendLowLevelAlert(topic); // Send Slack notification
         }
         currentSeries[topic] = currentTempSeries;
         console.log(currentSeries[topic]);
+        io.sockets.emit(`${topic}`, currentTempSeries);
         if (objectWithTimeouts[topic]) {
           clearTimeout(objectWithTimeouts[topic]);
         }
@@ -128,8 +127,7 @@ client.on('message', (topic, message) => {
               mqttService.setSeriesStatus(device._id, true);
               console.log('Sending disconnected...');
               io.sockets.emit(`${topic}`, 'Disconnected');
-              // Send slack notification !!
-              slackSerivce.deviceDisconnected(topic);
+              slackSerivce.deviceDisconnected(topic); // Send slack notification !!
             });
         }, timeout);
       });
@@ -144,3 +142,4 @@ require('./routes/user.route')(app);
 require('./routes/mqtt.route')(app);
 require('./routes/patient.route')(app);
 require('./routes/slackapp')(app);
+require('./routes/bagType.route')(app);

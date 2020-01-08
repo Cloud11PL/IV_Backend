@@ -21,7 +21,7 @@ exports.create = (req, res) => {
 exports.findAll = (req, res) => {
   Device.find({}, (err, devices) => {
     res.send(devices);
-    // console.log(devices);
+    console.log(devices);
   });
 };
 

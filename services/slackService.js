@@ -9,7 +9,6 @@ const SLACK_TOKEN = require('../secretSlackKey');
 const web = new WebClient(SLACK_TOKEN);
 
 exports.getDevices = (req, res) => {
-  console.log(req.body);
   Device.find({}, (err, devices) => {
     const devicesNames = devices.map(device => ({
       color: 'good',

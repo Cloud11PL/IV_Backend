@@ -33,6 +33,28 @@ exports.getAllSeriesForDevice = (req, res) => {
   });
 };
 
+exports.getAllSeriesForPatient = (req, res) => {
+  Series.find({
+    patientId: mongoose.Types.ObjectId(req.query.deviceId),
+  }, (err, series) => {
+    if (err) {
+      res.send(err);
+    }
+    res.send(series);
+  });
+};
+
+exports.getAllSeriesForPatient = (req, res) => {
+  Series.find({
+    patientId: mongoose.Types.ObjectId(req.query.patientId),
+  }, (err, series) => {
+    if (err) {
+      res.send(err);
+    }
+    res.send(series);
+  });
+};
+
 exports.getSingleSeries = (req, res) => {
   Series.findOne({
     mqttName: req.query.mqttName,
@@ -45,15 +67,33 @@ exports.getSingleSeries = (req, res) => {
   });
 };
 
-exports.editSingleSeries = (req, res) => {
+exports.editBagType = (req, res) => {
   Series.findOneAndUpdate({
-    mqttName: req.body.mqttName,
-    SeriesId: req.body.SeriesId,
-  }, req.body, { useFindAndModify: false }, (err, newSeries) => {
+    _id: req.body._id,
+  }, {
+    bagType: mongoose.Schema.ObjectId(req.body.bagType),
+  }, {
+    useFindAndModify: false,
+    new: true,
+  }, (err, series) => {
     if (err) {
       res.send(err);
     }
-    res.send(newSeries);
+
+    res.json(series);
+  });
+};
+
+exports.editSingleSeries = (req, res) => {
+  Series.findOneAndUpdate({
+    _id: req.body.seriesId,
+  }, {
+    bagType: mongoose.Types.ObjectId(req.body.bagType),
+  }, { new: true }, (err, upd) => {
+    if (err) {
+      res.json(err);
+    }
+    res.json(upd);
   });
 };
 

@@ -12,14 +12,24 @@ const SeriesSchema = mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  endTime: {
+    type: Date,
+  },
   isDone: {
     type: Boolean,
     default: false,
   },
-  BagType: {
-    type: String,
-    default: 'Unknown',
+  bagType: {
+    type: mongoose.Schema.Types.ObjectId,
+    // default: 'Unknown',
+  },
+  patientId: {
+    type: mongoose.Schema.Types.ObjectId,
   },
 });
+
+// Is notification sent??
+// Math equation
+// Max value
 
 module.exports = mongoose.model('Series', SeriesSchema);

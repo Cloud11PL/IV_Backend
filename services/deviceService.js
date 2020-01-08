@@ -13,7 +13,7 @@ exports.findDeviceId = mqttName => new Promise((resolve, reject) => {
 });
 
 exports.listDevices = new Promise((resolve, reject) => {
-  console.log('wywoluje sie xd');
+  console.log('Listing all devices...');
   Device.find({}, (err, devices) => {
     if (err) {
       reject(err);
